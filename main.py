@@ -16,24 +16,42 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
+BASE_DIR = Path(__file__).resolve().parent
 
-def _mount_docs_site() -> None:
-    docs_main = Path(__file__).resolve().parent / "danideanda-docs" / "main.py"
-    spec = spec_from_file_location("danideanda_docs_main", docs_main)
+
+def _mount_app(module_name: str, relative_path: str, host: str) -> None:
+    """Load a standalone FastAPI app and bind it to a single Host header."""
+    path = BASE_DIR / relative_path
+    spec = spec_from_file_location(module_name, path)
     if spec is None or spec.loader is None:
-        logger.error("Unable to load documentation app from %s", docs_main)
+        logger.error("Unable to load app %s from %s", module_name, path)
         return
 
     try:
         module = module_from_spec(spec)
         spec.loader.exec_module(module)
     except (FileNotFoundError, ImportError, SyntaxError):
-        logger.exception("Documentation app could not be loaded")
+        logger.exception("App %s could not be loaded", module_name)
         return
-    app.router.routes.append(Host("docs.danidenada.dev", app=module.app))
+
+    app.router.routes.append(Host(host, app=module.app))
+    logger.info("Mounted %s on %s", module_name, host)
 
 
-_mount_docs_site()
+def _mount_sites() -> None:
+    _mount_app(
+        "danideanda_download_main",
+        "danideanda-download/main.py",
+        "download.danidenada.dev",
+    )
+    _mount_app(
+        "danideanda_docs_main",
+        "danideanda-docs/main.py",
+        "docs.danidenada.dev",
+    )
+
+
+_mount_sites()
 
 
 def main() -> None:
