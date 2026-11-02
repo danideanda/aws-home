@@ -1,5 +1,7 @@
 import logging
+import logging.handlers
 import os
+import sys
 from importlib.util import module_from_spec, spec_from_file_location
 from pathlib import Path
 
@@ -10,10 +12,41 @@ from danideanda_api.api import app
 from danideanda_api.updater import start_update_monitor
 
 
-logging.basicConfig(
-    level=os.getenv("LOG_LEVEL", "INFO").upper(),
-    format="%(asctime)s %(levelname)s %(name)s: %(message)s",
-)
+LOG_FILE = Path(os.getenv("LOG_FILE", "/var/log/aws-home/app.log"))
+LOG_LEVEL = os.getenv("LOG_LEVEL", "INFO").upper()
+LOG_FORMAT = "%(asctime)s %(levelname)s %(name)s: %(message)s"
+
+
+def _configure_logging() -> None:
+    """Consola (journald) + fichero rotativo diario."""
+    formatter = logging.Formatter(LOG_FORMAT)
+
+    console = logging.StreamHandler(sys.stdout)
+    console.setFormatter(formatter)
+
+    handlers: list[logging.Handler] = [console]
+
+    try:
+        LOG_FILE.parent.mkdir(parents=True, exist_ok=True)
+        file_handler = logging.handlers.TimedRotatingFileHandler(
+            LOG_FILE,
+            when="midnight",
+            backupCount=14,
+            encoding="utf-8",
+            utc=True,
+        )
+        file_handler.setFormatter(formatter)
+        handlers.append(file_handler)
+    except OSError:
+        # Si el fichero no se puede abrir, seguimos solo con el journal.
+        logging.getLogger(__name__).warning(
+            "No se pudo abrir el fichero de log %s", LOG_FILE, exc_info=True
+        )
+
+    logging.basicConfig(level=LOG_LEVEL, handlers=handlers, force=True)
+
+
+_configure_logging()
 logger = logging.getLogger(__name__)
 
 BASE_DIR = Path(__file__).resolve().parent
@@ -58,8 +91,10 @@ def main() -> None:
     host = os.getenv("API_HOST", "127.0.0.1")
     port = int(os.getenv("API_PORT", "8000"))
     logger.info("Starting the read-only API on %s:%s", host, port)
+    logger.info("Logging to %s (level=%s)", LOG_FILE, LOG_LEVEL)
     start_update_monitor()
-    uvicorn.run(app, host=host, port=port, log_level="info")
+    # log_config=None: uvicorn no reconfigura logging y propaga a nuestros handlers.
+    uvicorn.run(app, host=host, port=port, log_level="info", log_config=None)
 
 
 if __name__ == "__main__":
