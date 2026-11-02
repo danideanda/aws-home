@@ -1,0 +1,45 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<title>Funciones API</title>
+</head>
+<body>
+<h1>Funciones API</h1>
+<p class="lead">La API de <code>api.danidenada.dev</code> es de solo lectura. No ejecuta comandos del sistema ni acepta rutas indicadas por el cliente.</p>
+
+<h2>autenticación</h2>
+<p>Los comandos administrativos requieren la cabecera <code>X-API-Key</code>. Si falta o no coincide, el servidor responde <strong>404</strong>, igual que si el recurso no existiera.</p>
+<pre><code>curl -X POST https://api.danidenada.dev/api \
+  -H 'Content-Type: application/json' \
+  -H 'X-API-Key: TU_CLAVE' \
+  -d '{"command":"monitor"}'</code></pre>
+
+<h2>comandos disponibles</h2>
+<table>
+  <thead>
+    <tr><th>Comando</th><th>Respuesta</th></tr>
+  </thead>
+  <tbody>
+    <tr><td><code>estado</code></td><td>Estado del proceso y tiempo de actividad.</td></tr>
+    <tr><td><code>hora</code></td><td>Hora actual en UTC.</td></tr>
+    <tr><td><code>version</code></td><td>Versión de Python en uso.</td></tr>
+    <tr><td><code>monitor</code></td><td>Uptime, carga, memoria, disco y métricas del proceso.</td></tr>
+    <tr><td><code>security</code></td><td>Logins SSH fallidos, configuración sshd, permisos de secretos, puertos en escucha y reinicio pendiente.</td></tr>
+  </tbody>
+</table>
+
+<h2>login de cursos</h2>
+<p><code>POST /api/login</code> valida usuario y contraseña y devuelve un token firmado con caducidad de 12 horas.</p>
+<pre><code>curl -X POST https://api.danidenada.dev/api/login \
+  -H 'Content-Type: application/json' \
+  -d '{"username":"alumno","password":"..."}'</code></pre>
+<p>Credenciales incorrectas, usuario inexistente o token inválido responden siempre <strong>404</strong>.</p>
+
+<h2>descargas</h2>
+<ul>
+  <li><code>/docs/&lt;archivo&gt;.md</code> — documentación pública.</li>
+  <li><code>/study/&lt;archivo&gt;.md</code> — material privado; exige <code>Authorization: Bearer &lt;token&gt;</code>.</li>
+</ul>
+</body>
+</html>
