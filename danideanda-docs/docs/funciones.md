@@ -6,7 +6,7 @@ por quien hace la petición.
 
 ## Inicio de la aplicación
 
-El archivo [`main.py`](../main.py) es el punto de entrada:
+El archivo [`main.py`](../../main.py) es el punto de entrada:
 
 - Importa la aplicación FastAPI desde `danideanda_api.api`.
 - Configura el registro de mensajes (`logging`). El nivel puede cambiarse con
@@ -17,6 +17,23 @@ El archivo [`main.py`](../main.py) es el punto de entrada:
   colocar un proxy HTTPS delante. Para escuchar en otra interfaz, hay que
   configurar `API_HOST` conscientemente y proteger el servicio con HTTPS y
   controles de red.
+- Inicia el comprobador de actualizaciones de `danideanda_api/updater.py`.
+  Revisa `origin/main` cada 300 segundos por defecto; el intervalo se puede
+  cambiar con `UPDATE_CHECK_INTERVAL_SECONDS` (mínimo 60 segundos).
+
+### Actualizaciones automáticas
+
+El actualizador solo considera el remoto oficial `danideanda/aws-home`, exige
+estar en la rama `main` y no modifica una copia con cambios locales o archivos
+sin seguimiento. Si encuentra un commit que sea avance directo de la versión
+instalada, actualiza con `git merge --ff-only` y reemplaza el proceso por una
+nueva ejecución de `main.py`. Si hay divergencia, un remoto distinto, o falla
+Git, deja un mensaje en el registro y la API sigue funcionando.
+
+La actualización descarga y ejecuta el código publicado en `main`; por eso,
+los cambios publicados allí se despliegan automáticamente. Las dependencias de
+Python no se instalan automáticamente: si una actualización las requiere,
+deben instalarse manualmente con `python3 -m pip install -r requirements.txt`.
 
 ## API (`danideanda_api/api.py`)
 
@@ -70,13 +87,18 @@ archivos y no ofrece comandos arbitrarios.
 
 ## Uso
 
-Instala las dependencias de [`requirements.txt`](../requirements.txt), crea el
+Instala las dependencias de [`requirements.txt`](../../requirements.txt), crea el
 archivo de clave y arranca el servicio:
 
 ```sh
 python3 -m pip install -r requirements.txt
 python3 main.py
 ```
+
+El mismo proceso sirve la documentación cuando la petición llega al host
+`docs.danidenada.dev`. La página raíz enumera los Markdown y, por ejemplo,
+`https://docs.danidenada.dev/funciones.md` devuelve el contenido original del
+archivo como `text/markdown`.
 
 Ejemplo de petición:
 

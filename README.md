@@ -16,5 +16,24 @@ no permite leer rutas arbitrarias ni devuelve archivos o claves. La copia
 periódica de `home` está desactivada hasta definir directorios explícitos y un
 destino privado; no se deben subir secretos ni datos personales a este repo.
 
-Consulta [la explicación de las funciones](docs/funciones.md) para ver los
-detalles de los módulos, comandos y configuración.
+Consulta [la explicación de las funciones](danideanda-docs/docs/funciones.md)
+para ver los detalles de los módulos, comandos y configuración.
+
+## Sitio de documentación
+
+El mismo servicio también atiende el host `docs.danidenada.dev`. La ruta `/`
+lista los archivos Markdown de `danideanda-docs/docs`; una ruta como
+`/funciones.md` entrega el contenido original en `text/markdown`. Configura el
+DNS y el proxy HTTPS para que ese dominio llegue al servicio y conserve el
+encabezado `Host`. El sitio solo busca documentos Markdown directamente dentro
+de esa carpeta.
+
+## Actualizaciones automáticas
+
+Al arrancar, el proceso comprueba `origin/main` cada 300 segundos por defecto
+(`UPDATE_CHECK_INTERVAL_SECONDS`, mínimo 60). Solo actualiza el repositorio
+oficial si está en `main`, la copia local está limpia y el cambio es un avance
+directo; después reinicia el proceso. Las actualizaciones ejecutan el código
+publicado en `main`, así que publica allí solo cambios confiables. No se
+instalan dependencias automáticamente. Más detalles en
+[la documentación de funciones](danideanda-docs/docs/funciones.md).
